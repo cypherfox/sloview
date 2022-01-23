@@ -9,74 +9,56 @@ var testData = `
 {
     "version": "v1alpha1",
     "name": "  "Nexus OSS (OCI Registry)",
-    endpoint: "https://nexus.example.com/",
-    infoEndpoint: "https://cooldudes.example.com/serviceInfo/nexus",
-    dependencies: [ 
+    "endpoint": "https://nexus.example.com/",
+    "infoEndpoint": "https://cooldudes.example.com/serviceInfo/nexus",
+    "dependencies": [ 
         {
             "kind": "eventualMax",
             "eventualMax": 300,
             "endpoint": "https://ns1.example.com/",
-            infoEndpoint: "https://cooldudes.example.com/serviceInfo/dns",
-            slos: [
+            "infoEndpoint": "https://cooldudes.example.com/serviceInfo/dns",
+            "slos": [
                 {
 					"kind": "Availability",
-					"details": {
-						"interval": "month",
-						"percentage": 90	
-					}
-                },
+					"interval": "month",
+					"targetValue": 96
+				},
                 {
-					// Mean Time To Recovery in seconds during interval
 					"kind": "MTTR",
-					"details": {
-						"interval": "month",
-						"mean": 100
-					}
+					"interval": "month",
+					"targetValue": 100
                 },
                 {
-					// Latency Average per Interval, 90th percentile, in milliseconds
 					"kind": "Latency",
-					"details": {
-						"interval": "month",
-						"latency": 21	
-					}                    
+					"interval": "month",
+					"targetValue": 100
                 }
             ]
         } ,
         {
-            "kind": "permanent"
-            endpoint: "https://mysqldb.example.com/"
-            infoEndpoint: "https://axis-of-evil.example.com/services/mysql"
-            slos: [
+            "kind": "permanent",
+            "endpoint": "https://mysqldb.example.com/",
+            "infoEndpoint": "https://axis-of-evil.example.com/services/mysql",
+            "slos": [
                 {
 					"kind": "Availability",
-					"details": {
-						"interval": "month",
-						"percentage": 95	
-					}
+					"interval": "month",
+					"targetValue": 96
                 },
-				/*
                 {
-					// Mean Time To Recovery in seconds during interval
 					"kind": "MTTR",
-					"details": {
-						"interval": "month",
-						"mean": 100
-					}
+					"interval": "month",
+					"targetValue": 100
                 },
                 {
-					// Latency Average per Interval, 90th percentile, in milliseconds
 					"kind": "Latency",
-					"details": {
-						"interval": "month",
-						"latency": 100
-					}                    
+					"interval": "month",
+					"targetValue": 100
                 }
-				*/
             ]
         } 
-    ]
-    consumers: [ 
+    ],
+    "consumers": [ 
 		/*
         {
             type: <permanent |  eventual | eventualMax | eventualStart | startup; required>
