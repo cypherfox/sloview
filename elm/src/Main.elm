@@ -1,20 +1,30 @@
 module Main exposing (..)
 
 import Browser
-import Html exposing (Html, text, pre)
+import Browser.Navigation as Nav
+import Html exposing (Html)
 import Http
 import Debug
+import Url
 import Json.Decode as Decode exposing (Decoder, int, string)
 import Json.Decode.Pipeline exposing (required, hardcoded, optional)
+import Element exposing (..)
+import Element.Background as Background
+import Element.Border as Border
+import Element.Font as Font
+import Element.Input as Input
+import Dialog exposing (..)
 
 -- MAIN
-
+main : Program () Model Msg
 main =
-  Browser.element
+  Browser.application
     { init = init
+    , view = view
     , update = update
     , subscriptions = subscriptions
-    , view = view
+    , onUrlChange = UrlChanged
+    , onUrlRequest = LinkClicked
     }
 
 
@@ -23,10 +33,10 @@ main =
 type Model
   = Failure String
   | Loading
-  | Success String
+  | Success ServiceView String 
 
-init : () -> (Model, Cmd Msg)
-init _ =
+init : () -> Url.Url -> Nav.Key -> (Model, Cmd Msg)
+init _ _ _ =
   ( Loading
   , Http.get
       { url = "http://localhost:8010/testdata"
@@ -39,6 +49,9 @@ init _ =
 
 type Msg
   = GotText (Result Http.Error String)
+  | UrlChanged Url.Url
+  | LinkClicked Browser.UrlRequest
+
 
 
 update : Msg -> Model -> (Model, Cmd Msg)
@@ -47,10 +60,21 @@ update msg model =
     GotText result ->
       case result of
         Ok fullText ->
-          (Success fullText, Cmd.none)
+          case (Decode.decodeString serviceViewDecoder fullText) of
+            (Ok service) ->  
+               (Success  service fullText, Cmd.none)
+            
+            (Err errCode) -> 
+               (Failure ((Debug.toString errCode) ++ ": \n¸\n" ++ fullText), Cmd.none)
 
         Err errCode ->
           (Failure (Debug.toString errCode), Cmd.none)
+
+    UrlChanged _ ->
+      ( model, Cmd.none )
+
+    LinkClicked _ ->
+      ( model, Cmd.none )
 
 
 -- SUBSCRIPTIONS
@@ -62,21 +86,38 @@ subscriptions model =
 
 -- VIEW
 
-view : Model -> Html Msg
+view : Model -> Browser.Document Msg
 view model =
   case model of
     Failure errCode->
-      text ("I was unable to load your book." ++ errCode)
+        { title = "SLOView: Service View"
+        , body = [ Html.text ("I was unable to load the service view: " ++ errCode) ]
+        }
 
     Loading ->
-      text "Loading..."
+        { title = "SLOView: Loading"
+        , body = [ Html.text ("Loading...") ]
+        }
 
-    Success fullText ->
-      pre [] [ (text "\n\n------------\n"), (text fullText) ]
+    Success service fullText ->    
+        viewSuccess service fullText
 
 
+viewSuccess service fullText =
+  { title = "SLOView: Service View"
+  , body = [  Element.layout []
+           <| column [width fill] 
+                [ row [] [(text service.name)]
+                , row [] [(text "-------------")]
+                , row [] [ (text fullText)]
+                ]
+        ]
+  }
+
+            
 
 -- PARSE JSON
+-- TODO: convert me to use https://package.elm-lang.org/packages/fujiy/elm-json-convert/latest/
 
 type alias SLO =
     { kind: String

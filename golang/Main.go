@@ -8,7 +8,7 @@ import (
 var testData = `
 {
     "version": "v1alpha1",
-    "name": "  "Nexus OSS (OCI Registry)",
+    "name": "Nexus OSS (OCI Registry)",
     "endpoint": "https://nexus.example.com/",
     "infoEndpoint": "https://cooldudes.example.com/serviceInfo/nexus",
     "dependencies": [ 
@@ -59,17 +59,7 @@ var testData = `
         } 
     ],
     "consumers": [ 
-		/*
-        {
-            type: <permanent |  eventual | eventualMax | eventualStart | startup; required>
-            eventualMax: <time in second until eventualMax has to be refreshed. a value of 0 makes it equal to   
-                          permanent; optional>
-            endpoint: <URL; required>
-            infoEndpoint: <URL, where service info data, for use by sloview, can be read from; optional>
-        } 
-		*/
     ]
-}
 }
 `
 
@@ -78,7 +68,7 @@ func testdata(w http.ResponseWriter, req *http.Request) {
 
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
-	fmt.Fprintf(w, "F2 \n%v\n", testData)
+	fmt.Fprintf(w, "%v\n", testData)
 }
 
 func headers(w http.ResponseWriter, req *http.Request) {

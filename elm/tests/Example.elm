@@ -6,6 +6,7 @@ import Test exposing (..)
 
 import Main exposing (..)
 import Json.Decode as Decode exposing (decodeString, Error)
+import Json.Encode as Encode exposing (encode)
 
 
 parseSLO : Test
@@ -215,3 +216,4 @@ parseServiceView =
                     in
                     Expect.equal (Ok expected) (Decode.decodeString serviceViewDecoder json)
         ]
+
