@@ -103,17 +103,41 @@ view model =
         viewSuccess service fullText
 
 
+viewSuccess: ServiceView -> String -> Browser.Document Msg
 viewSuccess service fullText =
   { title = "SLOView: Service View"
   , body = [  Element.layout []
-           <| column [width fill] 
-                [ row [] [(text service.name)]
-                , row [] [(text "-------------")]
-                , row [] [ (text fullText)]
+           <| column [width fill, spacing 25] 
+                [ (viewHeader service)
+                , (serviceCard service)
+                , (viewFooter service)
+--                , row [] [(text "-------------")]
+--                , row [] [ (text fullText)]
                 ]
         ]
   }
 
+serviceCard service =
+     el [ Border.color cardStyle.borderColor
+        , Background.color cardStyle.bgColor
+        , width (px 220), height (px 120)
+        , centerX, centerY
+        , padding 10
+        , Border.width 2
+        , Border.shadow cardStyle.shadow
+        ] 
+       (column [ width fill, height fill]
+               [ row [] [(text service.name)]
+               , row [] [(text service.endpoint)]
+               ])
+
+viewHeader: ServiceView -> Element msg
+viewHeader model =
+  row [width fill, Background.color headerStyle.bgColor, padding 20] [(text "SLOView"), el [alignRight] (text "(no user)")]
+
+viewFooter: ServiceView -> Element msg
+viewFooter _ =
+  row [width fill, padding 10, Background.color footerStyle.bgColor, padding 20] [(text "copyright 2022 Lutz Behnke"), el [alignRight] (text "About")]
             
 
 -- PARSE JSON
@@ -168,3 +192,40 @@ sloDecoder =
         |> required "kind" string
         |> required "interval" string
         |> required "targetValue" int
+
+
+-- STYLE
+type alias ShadowConfig =
+    { offset : ( Float, Float )
+    , size : Float
+    , blur : Float
+    , color : Color
+    }
+
+type alias StyleConfig =
+    { bgColor : Color
+    , borderColor : Color
+    , shadow : ShadowConfig
+    }
+
+headerStyle : StyleConfig
+headerStyle = 
+    { bgColor = (rgb255 100 200 100)
+    , borderColor = (rgb255 50 200 50)
+    , shadow = (ShadowConfig (0.1, 0.1) 0.1 0 (rgb255 200 200 200))
+    }
+
+footerStyle : StyleConfig
+footerStyle = 
+    { bgColor = (rgb255 180 230 180)
+    , borderColor = (rgb255 50 200 50)
+    , shadow = (ShadowConfig (0.1, 0.1) 0.1 0 (rgb255 200 200 200))
+    }
+
+cardStyle : StyleConfig
+cardStyle = 
+    { bgColor = (rgb255 255 255 255)
+    , borderColor = (rgb255 50 100 50)
+    , shadow = (ShadowConfig (4.0, 8.0) 6.0 20.0 (rgba 0 0 0 0.2))
+    }
+
