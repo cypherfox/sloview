@@ -14,6 +14,10 @@ import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
 import Dialog exposing (..)
+import Widget
+import Widget.Icon as Icon
+import Widget.Material as Material
+
 
 -- MAIN
 main : Program () Model Msg
@@ -33,7 +37,7 @@ main =
 type Model
   = Failure String
   | Loading
-  | Success ServiceView String 
+  | Success ServiceView Int String 
 
 init : () -> Url.Url -> Nav.Key -> (Model, Cmd Msg)
 init _ _ _ =
@@ -51,6 +55,7 @@ type Msg
   = GotText (Result Http.Error String)
   | UrlChanged Url.Url
   | LinkClicked Browser.UrlRequest
+  | ChangedTab Int
 
 
 
@@ -62,7 +67,8 @@ update msg model =
         Ok fullText ->
           case (Decode.decodeString serviceViewDecoder fullText) of
             (Ok service) ->  
-               (Success  service fullText, Cmd.none)
+               -- set to first tab initially
+               (Success  service 1 fullText, Cmd.none)
             
             (Err errCode) -> 
                (Failure ((Debug.toString errCode) ++ ": \n¸\n" ++ fullText), Cmd.none)
@@ -75,6 +81,13 @@ update msg model =
 
     LinkClicked _ ->
       ( model, Cmd.none )
+
+    ChangedTab tab ->
+        case model of
+            Success service _ fullText ->
+                (Success service tab fullText, Cmd.none)
+            _ -> 
+                (Failure "full text not received yet", Cmd.none)
 
 
 -- SUBSCRIPTIONS
@@ -99,17 +112,18 @@ view model =
         , body = [ Html.text ("Loading...") ]
         }
 
-    Success service fullText ->    
-        viewSuccess service fullText
+    Success service selectedTab fullText ->    
+        viewSuccess service selectedTab fullText
 
 
-viewSuccess: ServiceView -> String -> Browser.Document Msg
-viewSuccess service fullText =
+viewSuccess: ServiceView -> Int -> String -> Browser.Document Msg
+viewSuccess service selectedTab fullText =
   { title = "SLOView: Service View"
   , body = [  Element.layout []
            <| column [width fill, spacing 25] 
                 [ (viewHeader service)
                 , (serviceCard service)
+                , (viewTabs selectedTab service)
                 , (viewFooter service)
 --                , row [] [(text "-------------")]
 --                , row [] [ (text fullText)]
@@ -118,18 +132,43 @@ viewSuccess service fullText =
   }
 
 serviceCard service =
-     el [ Border.color cardStyle.borderColor
-        , Background.color cardStyle.bgColor
-        , width (px 220), height (px 120)
-        , centerX, centerY
-        , padding 10
-        , Border.width 2
-        , Border.shadow cardStyle.shadow
-        ] 
-       (column [ width fill, height fill]
-               [ row [] [(text service.name)]
-               , row [] [(text service.endpoint)]
+     el (List.append cardStyle [ width (px 300), height (px 120)]) 
+        (column [ width fill, height fill, spacing 15, padding 5]
+               [ row [width fill] [el[alignLeft](text "Service name: "), el[alignRight](text service.name)]
+               , row [width fill] [el[alignLeft](text "Endpoint: "), el[alignRight](text service.endpoint)]
                ])
+     
+
+viewTabs: Int -> ServiceView -> Element Msg
+viewTabs selected service =
+    Widget.tab (Material.tab Material.defaultPalette)
+        { tabs =
+            { selected = Just selected
+            , options =
+                [ { text = "dependencies"
+                  , icon = always Element.none
+                  }
+                , { text = "consumers"
+                   , icon = always Element.none
+                  }
+                ]
+            , onSelect = ChangedTab >> Just
+            }
+        , content =
+            \s ->
+                (case s of
+                    Just 0 ->
+                        "This is the depedency tab"
+
+                    Just 1 ->
+                        "This is the consumer tab"
+
+                    _ ->
+                        "Please select a tab"
+                )
+                    |> Element.text
+        }
+
 
 viewHeader: ServiceView -> Element msg
 viewHeader model =
@@ -137,7 +176,7 @@ viewHeader model =
 
 viewFooter: ServiceView -> Element msg
 viewFooter _ =
-  row [width fill, padding 10, Background.color footerStyle.bgColor, padding 20] [(text "copyright 2022 Lutz Behnke"), el [alignRight] (text "About")]
+  row footerStyle [(text "copyright 2022 Lutz Behnke"), el [alignRight] (text "About")]
             
 
 -- PARSE JSON
@@ -215,17 +254,23 @@ headerStyle =
     , shadow = (ShadowConfig (0.1, 0.1) 0.1 0 (rgb255 200 200 200))
     }
 
-footerStyle : StyleConfig
+
 footerStyle = 
-    { bgColor = (rgb255 180 230 180)
-    , borderColor = (rgb255 50 200 50)
-    , shadow = (ShadowConfig (0.1, 0.1) 0.1 0 (rgb255 200 200 200))
-    }
+    [ width fill
+    , padding 10
+    , Background.color (rgb255 180 230 180)
+    , padding 20
+    , Font.size 14
+    -- , borderColor = (rgb255 50 200 50)
+    -- , shadow = (ShadowConfig (0.1, 0.1) 0.1 0 (rgb255 200 200 200))
+    ]
 
-cardStyle : StyleConfig
 cardStyle = 
-    { bgColor = (rgb255 255 255 255)
-    , borderColor = (rgb255 50 100 50)
-    , shadow = (ShadowConfig (4.0, 8.0) 6.0 20.0 (rgba 0 0 0 0.2))
-    }
-
+    [ Border.color (rgb255 50 100 50)
+        , Background.color (rgb255 255 255 255)
+        , centerX, centerY
+        , padding 10
+        , Border.width 2
+        , Border.shadow (ShadowConfig (4.0, 8.0) 6.0 20.0 (rgba 0 0 0 0.2))
+        , Font.size 12
+        ]
